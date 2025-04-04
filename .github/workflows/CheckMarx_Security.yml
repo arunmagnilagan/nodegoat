@@ -1,0 +1,78 @@
+name: Checkmarx Open Source Security Scans
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  kics_scan:
+    name: KICS - IaC Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run KICS
+        uses: Checkmarx/kics-github-action@v1.6.0
+        with:
+          path: '.'
+          output_path: 'kics-results'
+          output_formats: 'json,sarif'
+          fail_on: 'high'  # change based on your policy
+
+      - name: Upload KICS results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: kics-results/results.sarif
+
+  vorpal_scan:
+    name: Vorpal - Code Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.21
+
+      - name: Install Vorpal
+        run: |
+          go install github.com/checkmarx/GoLang-SCA@latest
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      - name: Run Vorpal
+        run: GoLang-SCA -d . -o vorpal-results.json
+
+      - name: Upload Vorpal results (optional)
+        uses: actions/upload-artifact@v3
+        with:
+          name: vorpal-results
+          path: vorpal-results.json
+
+  tms_scan:
+    name: TMS - Secrets Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Too Many Secrets (TMS)
+        run: |
+          git clone https://github.com/checkmarx/tms.git
+          cd tms
+          go build
+          sudo mv tms /usr/local/bin
+
+      - name: Run TMS
+        run: |
+          tms scan . > tms-results.txt || true
+
+      - name: Upload TMS results
+        uses: actions/upload-artifact@v3
+        with:
+          name: tms-results
+          path: tms-results.txt
