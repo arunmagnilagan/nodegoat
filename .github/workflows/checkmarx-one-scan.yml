@@ -1,0 +1,26 @@
+  name: Checkmarx One Scan
+
+  on: [push]
+
+  jobs:
+    checkmarx-one:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+
+        - name: Run Checkmarx One Scan
+          uses: checkmarx-ts/checkmarx-github-action@v1
+          with:
+            base_uri: 'https://ast.checkmarx.net'
+            cx_tenant: 'your-tenant-name'
+            cx_client_id: ${{ secrets.CX_CLIENT_ID }}
+            cx_client_secret: ${{ secrets.CX_CLIENT_SECRET }}
+            project_name: 'your-project-name'
+            branch: 'main'
+            additional_params: '--report-format sarif --output-path .'
+
+        - name: Upload SARIF file
+          uses: github/codeql-action/upload-sarif@v2
+          with:
+            sarif_file: 'cx_result.sarif'
