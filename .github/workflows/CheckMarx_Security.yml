@@ -23,7 +23,7 @@ jobs:
           fail_on: 'high'  # change based on your policy
 
       - name: Upload KICS results
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: kics-results/results.sarif
 
