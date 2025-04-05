@@ -1,26 +1,34 @@
-  name: Checkmarx One Scan
+name: Checkmarx One Scan
 
-  on: [push]
+on: [push]
 
-  jobs:
-    checkmarx-one:
-      runs-on: ubuntu-latest
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v3
+jobs:
+  checkmarx-one:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-        - name: Run Checkmarx One Scan
-          uses: checkmarx-ts/checkmarx-github-action@v1
-          with:
-            base_uri: 'https://ast.checkmarx.net'
-            cx_tenant: 'your-tenant-name'
-            cx_client_id: ${{ secrets.CX_CLIENT_ID }}
-            cx_client_secret: ${{ secrets.CX_CLIENT_SECRET }}
-            project_name: 'your-project-name'
-            branch: 'main'
-            additional_params: '--report-format sarif --output-path .'
+      - name: Run Checkmarx One Scan
+        uses: checkmarx-ts/checkmarx-github-action@v1
+        with:
+          base_uri: 'https://ast.checkmarx.net'
+          cx_tenant: 'your-tenant-name'
+          cx_client_id: ${{ secrets.CX_CLIENT_ID }}
+          cx_client_secret: ${{ secrets.CX_CLIENT_SECRET }}
+          project_name: 'your-project-name'
+          branch: 'main'
+          additional_params: '--report-format sarif --output-path .'
 
-        - name: Upload SARIF file
-          uses: github/codeql-action/upload-sarif@v3
-          with:
-            sarif_file: 'cx_result.sarif'
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'cx_result.sarif'
+
+      - name: Run KICS Scan
+        uses: Checkmarx/kics-github-action@v1.7
+        with:
+          path: '.'  # Or point to IaC folder like 'infrastructure/'
+          output_path: 'kics-results'
+          output_formats: 'sarif,html'
+          fail_on: 'high, medium'
